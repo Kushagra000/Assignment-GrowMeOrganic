@@ -1,103 +1,105 @@
-// src/components/DataList.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import data from './data'; // Adjust the path as per your project structure
 
-interface Post {
-  userId: number;
-  id: number;
-  title: string;
-  body: string;
-}
-
-interface UserData {
-  [userId: number]: Post[];
+interface CheckedItems {
+  [key: string]: boolean;
 }
 
 const DataList: React.FC = () => {
-  const [userData, setUserData] = useState<UserData>({});
-  const [selectedItems, setSelectedItems] = useState<{ [postId: number]: boolean }>({});
+  const [fetchedData, setFetchedData] = useState<Array<{ [key: string]: string[] }>>([]);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [checkAllItems, setCheckAllItems] = useState<boolean>(false);
+  const [checkedItems, setCheckedItems] = useState<CheckedItems>({});
 
   useEffect(() => {
-    // Fetch data from the API
+    // Simulating an asynchronous data fetch (replace this with your actual data fetching logic)
     const fetchData = async () => {
-      try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-        const data: Post[] = await response.json();
-
-        // Organize data based on userId
-        const organizedData: UserData = {};
-
-        data.forEach((item: Post) => {
-          const userId = item.userId;
-
-          if (!organizedData[userId]) {
-            organizedData[userId] = [];
-          }
-
-          organizedData[userId].push(item);
-        });
-
-        setUserData(organizedData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
+      // Assuming your data is fetched from an API or some asynchronous source
+      // For now, using a timeout to simulate asynchronous behavior
+      setTimeout(() => {
+        setFetchedData(data);
+      }, 1000);
     };
 
     fetchData();
-  }, []); // Empty dependency array ensures that this effect runs once after the initial render
+  }, []);
 
-  const handleToggleUser = (userId: number) => {
-    setSelectedItems((prevSelectedItems) => {
-      const updatedItems = { ...prevSelectedItems };
-
-      userData[userId]?.forEach((post: Post) => {
-        updatedItems[post.id] = !updatedItems[post.id];
-      });
-
-      return updatedItems;
-    });
+  const handleToggleCategory = (category: string) => {
+    setExpandedCategory((prevCategory) => (prevCategory === category ? null : category));
+    // setCheckAllItems(false); // Uncheck "Check All" when toggling individual categories
   };
 
-  const handleToggleItem = (postId: number) => {
-    setSelectedItems((prevSelectedItems) => ({
-      ...prevSelectedItems,
-      [postId]: !prevSelectedItems[postId],
+  const handleCheckAllItems = (category: string) => {
+    setCheckAllItems((prevCheckAllItems) => !prevCheckAllItems);
+    // setExpandedCategory(checkAllItems ? null : category);
+    setCheckedItems((prevCheckedItems) => {
+      const newCheckedItems = { ...prevCheckedItems };
+      fetchedData.forEach((item) => {
+        const currentCategory = Object.keys(item)[0];
+        if (currentCategory === category) {
+          item[currentCategory].forEach((subItem) => {
+            newCheckedItems[subItem] = !checkAllItems;
+          });
+        }
+      });
+      return newCheckedItems;
+    });
+  };
+  
+
+  const handleCheckSubItem = (subItem: string) => {
+    setCheckedItems((prevCheckedItems) => ({
+      ...prevCheckedItems,
+      [subItem]: !prevCheckedItems[subItem],
     }));
   };
 
   return (
     <div>
       <h2>Data List</h2>
-      {Object.entries(userData).map(([userId, userPosts]) => (
-        <div key={userId}>
-          <input
-            type="checkbox"
-            checked={userPosts.every((post: Post) => selectedItems[post.id])}
-            onChange={() => handleToggleUser(Number(userId))}
-          />
-          <span
-            style={{
-              cursor: 'pointer',
-              fontSize: '1.2rem', // Adjust the font size for the user ID
-            }}
-          >
-            User ID: {userId}
-          </span>
-          <ul style={{ fontSize: '1rem' }}> {/* Adjust the font size for the list items */}
-            {userPosts.map((post: Post) => (
-              <li key={post.id}>
-                <input
-                  type="checkbox"
-                  checked={selectedItems[post.id] || false}
-                  onChange={() => handleToggleItem(post.id)}
-                />
-                <strong>Title:</strong> {post.title}
-                <br />
-                <strong>Body:</strong> {post.body}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <ul>
+        {fetchedData.map((item, index) => {
+          const category = Object.keys(item)[0];
+          const isExpanded = expandedCategory === category;
+          const totalItems = item[category].length;
+
+          return (
+            <li key={index}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={checkAllItems && isExpanded}
+                    onChange={() => handleCheckAllItems(category)}
+                  />
+                  <strong>
+                    {category} ({totalItems})
+                  </strong>
+                </label>
+                <button onClick={() => handleToggleCategory(category)}>
+                  {isExpanded ? 'Collapse' : 'Expand'}
+                </button>
+              </div>
+              {isExpanded && (
+                <ul>
+                  {item[category].map((subItem, subIndex) => (
+                    <li key={subIndex}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={checkedItems[subItem]}
+                          onChange={() => handleCheckSubItem(subItem)}
+                        />
+                        {subItem}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 };

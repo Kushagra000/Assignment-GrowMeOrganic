@@ -29,8 +29,8 @@ const SecondPage: React.FC = () => {
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
-        {/* <DataList/> */}
         <DataTable/>
+        <DataList/>
       </Typography>
       <Button variant="contained" color="primary" onClick={handleLogout}>
         Logout
