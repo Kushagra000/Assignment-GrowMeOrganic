@@ -35,6 +35,9 @@ const SecondPage: React.FC = () => {
       <Button variant="contained" color="primary" onClick={handleLogout}>
         Logout
       </Button>
+      <div>
+      *Because of unavailability of google doc file in Task 4 I am unable to present the actual data I mailed for the problem but I didnt received any response. So I am presenting this dummy data which is hard coded.*
+      </div>
     </Container>
   );
 };
